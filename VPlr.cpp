@@ -227,7 +227,19 @@ int main(int argc, char *argv[])
             std::cout << "|" << std::endl;
     }
 
-    fOutput = parseCsvData(fileData, 9, 1);
+    // auto checking if need to skip last line element
+    int skip_rows = 9;
+    int skip_cols = 1;
+    {
+    std::stringstream iss(fileData[skip_rows][fileData[skip_rows].size()-1]);
+        float val;
+            if (iss >> val) {
+                skip_cols = 0;
+            }
+    }
+
+    fOutput = parseCsvData(fileData, skip_rows, skip_cols);
+
     if(!fOutput.sucess){
         std::cout << "[ERROR] issue with data parse..." << std::endl;
         return -3;
