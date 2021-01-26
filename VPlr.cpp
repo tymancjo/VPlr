@@ -48,7 +48,7 @@ results readFileAsText(std::string sFilename,  char deliminator = ';')
     };
 
 
-results parseCsvData(std::vector<std::vector<std::string>> inputText, int startRow=9, int cut_columns = 0){
+results parseCsvData(std::vector<std::vector<std::string>> inputText, int startRow, int cut_columns){
 
     results output;
     // first I need to figure out how many columns in data
@@ -125,6 +125,14 @@ static void mouseCall(int event, int x, int y, int flags, void* img){
     return;
 }}
 
+int str2int(std::string input_text){
+    std::stringstream iss(input_text);
+    int val;
+        if (iss >> val) {
+           return val;
+        } else return 0;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // the main loop //
@@ -153,25 +161,73 @@ int main(int argc, char *argv[])
     std::string input_video_file = fOutput.strMatrix[0][0];
     std::string input_csv_file = fOutput.strMatrix[1][0];
 
-    // reading which data columns to general plot from config file
-    std::vector<int> to_plot;
-    for (int i=0; i < fOutput.strMatrix[2].size(); i++){
-        std::stringstream iss(fOutput.strMatrix[2][i]);
-        int val;
-            if (iss >> val) {
-                to_plot.push_back(val);
-            }
+    // reading the data start row
+    std::cout << fOutput.strMatrix[1].size() << std::endl;
+    int skip_rows = 9;
+    if(fOutput.strMatrix[1].size() > 1){
+        skip_rows = str2int(fOutput.strMatrix[1][1]);
     }
-    
+    std::cout << skip_rows << std::endl;
+
 
     // reading which data columns to zoom plot from config file
-    std::vector<int> to_zoom_plot;
-    for (int i=0; i < fOutput.strMatrix[3].size(); i++){
-        std::stringstream iss(fOutput.strMatrix[3][i]);
-        int val;
-            if (iss >> val) {
-                to_zoom_plot.push_back(val);
+    std::vector<std::vector<int>> to_plot;
+    for (int i=0; i < fOutput.strMatrix[2].size(); i++){
+        std::vector<int> line_data;
+        std::string this_str = fOutput.strMatrix[2][i];
+
+        if (this_str.at(0) == '('){
+            // handling the math input 
+            // cleaning the bracket
+            boost::replace_all(this_str,"(","");
+            boost::replace_all(this_str,")","");
+
+            std::istringstream iss(this_str);
+            std::string token;
+
+            while(std::getline(iss, token, ',')){
+                boost::trim(token);
+                boost::replace_all(token,",",".");
+                line_data.push_back(str2int(token));
             }
+
+            to_plot.push_back(line_data);
+
+        } else {
+            int val = str2int(this_str);
+            line_data.push_back(val);
+            to_plot.push_back(line_data);
+        }
+    }
+
+    // reading which data columns to zoom plot from config file
+    std::vector<std::vector<int>> to_zoom_plot;
+    for (int i=0; i < fOutput.strMatrix[3].size(); i++){
+        std::vector<int> line_data;
+        std::string this_str = fOutput.strMatrix[3][i];
+
+        if (this_str.at(0) == '('){
+            // handling the math input 
+            // cleaning the bracket
+            boost::replace_all(this_str,"(","");
+            boost::replace_all(this_str,")","");
+
+            std::istringstream iss(this_str);
+            std::string token;
+
+            while(std::getline(iss, token, ',')){
+                boost::trim(token);
+                boost::replace_all(token,",",".");
+                line_data.push_back(str2int(token));
+            }
+
+            to_zoom_plot.push_back(line_data);
+
+        } else {
+            int val = str2int(this_str);
+            line_data.push_back(val);
+            to_zoom_plot.push_back(line_data);
+        }
     }
 
     // Sanity check for the incoming data
@@ -228,7 +284,6 @@ int main(int argc, char *argv[])
     }
 
     // auto checking if need to skip last line element
-    int skip_rows = 9;
     int skip_cols = 1;
     {
     std::stringstream iss(fileData[skip_rows][fileData[skip_rows].size()-1]);
@@ -249,6 +304,71 @@ int main(int argc, char *argv[])
     fileFloatData = fOutput.fMatrix;
     int columns = fileFloatData.size();
 
+    // preparing the zoom display array // ///////////////////////////////////
+    std::vector <std::vector<float>> mainFloatData;
+    for (int idx=0; idx < to_plot.size(); idx++){
+            // in case of multiple indexes we need to do the math
+            std::vector<float> new_data_vec;
+
+            for (int pt=0; pt < fileFloatData[0].size(); pt++){
+                // looping over all datapoints
+                float new_data_point = 0.0f;
+                
+                for (int i=0; i<to_plot[idx].size(); i++){
+
+                    int p = abs(to_plot[idx][i]);
+                    int mp = to_plot[idx][i] / p;
+                    p = p - 1; // as the user input counts from 1
+
+                    new_data_point += mp * fileFloatData[p][pt];
+                }
+                new_data_vec.push_back(new_data_point);
+            }
+            mainFloatData.push_back(new_data_vec);
+        }
+
+    // normalizing  zoom data vector
+    for (int col=0; col < mainFloatData.size(); col++){
+        std::vector<float> V;
+        V = normalizeFloatVec(mainFloatData[col]);
+        mainFloatData[col] = V;
+        }
+    // ///////////////////////////////////////////////////////////////////////
+
+
+    // preparing the zoom display array // ///////////////////////////////////
+    std::vector <std::vector<float>> zoomFloatData;
+    for (int idx=0; idx < to_zoom_plot.size(); idx++){
+            // in case of multiple indexes we need to do the math
+            std::vector<float> new_data_vec;
+
+            for (int pt=0; pt < fileFloatData[0].size(); pt++){
+                // looping over all datapoints
+                float new_data_point = 0.0f;
+                
+                for (int i=0; i<to_zoom_plot[idx].size(); i++){
+
+                    int p = abs(to_zoom_plot[idx][i]);
+                    int mp = to_zoom_plot[idx][i] / p;
+                    p = p - 1; // as the user input counts from 1
+
+                    new_data_point += mp * fileFloatData[p][pt];
+                }
+                new_data_vec.push_back(new_data_point);
+            }
+            zoomFloatData.push_back(new_data_vec);
+        }
+
+    // normalizing  zoom data vector
+    for (int col=0; col < zoomFloatData.size(); col++){
+        std::vector<float> V;
+        V = normalizeFloatVec(zoomFloatData[col]);
+        zoomFloatData[col] = V;
+        }
+    // ///////////////////////////////////////////////////////////////////////
+
+
+    // normalizing data vector
     for (int col=0; col < columns; col++){
         std::vector<float> V;
         V = normalizeFloatVec(fileFloatData[col]);
@@ -277,8 +397,7 @@ int main(int argc, char *argv[])
 
     // full plot 
     // vector with the plots to draw
-    //std::vector<int> to_plot = {2,3,4};
-    int plots_n = to_plot.size();
+    int plots_n = mainFloatData.size();
 
     int fullPlotWpx = 800;
     int fullPlotHpx = 120 * plots_n;
@@ -289,10 +408,10 @@ int main(int argc, char *argv[])
     // figuring out the  X step for data plot
     int dataStep = 1;
 
-    if (fileFloatData[0].size() > fullPlotWpx){
-       dataStep = fileFloatData[0].size() / fullPlotWpx;
+    if (mainFloatData[0].size() > fullPlotWpx){
+       dataStep = mainFloatData[0].size() / fullPlotWpx;
     }
-    int dXpx = fullPlotWpx * dataStep / fileFloatData[0].size();
+    int dXpx = fullPlotWpx * dataStep / mainFloatData[0].size();
     dXpx = (dXpx < 1)? 1:dXpx;
 
     // figuring out the Y position and scale
@@ -300,11 +419,8 @@ int main(int argc, char *argv[])
 
     int posY = 10 - plotYscale;
 
-        for (int idx=0; idx < to_plot.size(); idx++){
+        for (int idy=0; idy < mainFloatData.size(); idy++){
 
-        int p = abs(to_plot[idx]);
-        int mp = p / to_plot[idx];
-        p = p - 1;
         posY += 2 * plotYscale + 10;
 
         // X axis line
@@ -314,12 +430,12 @@ int main(int argc, char *argv[])
             int posX = 0;
             int posX1 = 0;
 
-            for (int idx=1; idx < fileFloatData[p].size()-dataStep; idx += dataStep){
+            for (int idx=1; idx < mainFloatData[idy].size()-dataStep; idx += dataStep){
                 // starting from one as the 0 is the added max value
                 posX1 += dXpx;
 
-                float pointVal0 = posY - (int)(fileFloatData[p][idx] * mp * plotYscale);
-                float pointVal1 = posY - (int)(fileFloatData[p][idx + dataStep] * mp * plotYscale);
+                float pointVal0 = posY - (int)(mainFloatData[idy][idx] * plotYscale);
+                float pointVal1 = posY - (int)(mainFloatData[idy][idx + dataStep] * plotYscale);
 
                 cv::line(fullPlotFrame, cv::Point(posX, pointVal0), cv:: Point(posX1, pointVal1),cv::Scalar(0,255,0),1,8,0);
                 posX = posX1;
@@ -358,7 +474,7 @@ int main(int argc, char *argv[])
     int playDelay = 1;
     int plotW = 100;
 
-    plots_n = to_zoom_plot.size();
+    plots_n = zoomFloatData.size();
     plotYscale = (plotHpx - 10 * plots_n - 20) / (2.0f * plots_n);
 
 
@@ -430,22 +546,18 @@ int main(int argc, char *argv[])
         int pixelYpos = 10 - plotYscale;
 
         // looping over plots
-        for (int idx=0; idx < to_zoom_plot.size(); idx++){
+        for (int idy=0; idy < zoomFloatData.size(); idy++){
 
-            int p = abs(to_zoom_plot[idx]);
-            int mp = p / to_zoom_plot[idx];
-            p = p - 1;
             pixelYpos += 2 * plotYscale + 10;
-
             int pixelXpos0 = plotWpx / 2;
 
             // put the value as text
-            float realValue = mp * fileFloatData[p][plotCenterIndex] * fileFloatData[p][0];
+            float realValue = zoomFloatData[idy][plotCenterIndex] * zoomFloatData[idy][0];
             float textSize = 0.5f;
             cv::putText(plotFrame, std::to_string(realValue), cv::Point(10,pixelYpos - plotYscale), cv::FONT_HERSHEY_SIMPLEX,textSize,cv::Scalar(200,200,200),1,cv::LINE_AA);
 
             // data point dot
-            cv::circle(plotFrame, cv::Point(pixelXpos0, pixelYpos - (int)(mp * fileFloatData[p][plotCenterIndex] * plotYscale)), 6, cv::Scalar(0,0,255), 2, 8, 0);
+            cv::circle(plotFrame, cv::Point(pixelXpos0, pixelYpos - (int)(zoomFloatData[idy][plotCenterIndex] * plotYscale)), 6, cv::Scalar(0,0,255), 2, 8, 0);
 
 
             // axis lines
@@ -455,8 +567,8 @@ int main(int argc, char *argv[])
             // drawing right from cursor
             for (int idx = plotCenterIndex; idx < plotEndIdx+1; idx++){
                 int pixelXpos1 = pixelXpos0 + plotdX;
-                float pointValue0 = pixelYpos - (int)(fileFloatData[p][idx] * mp * plotYscale);
-                float pointValue1 = pixelYpos - (int)(fileFloatData[p][idx + 1] * mp * plotYscale);
+                float pointValue0 = pixelYpos - (int)(zoomFloatData[idy][idx] * plotYscale);
+                float pointValue1 = pixelYpos - (int)(zoomFloatData[idy][idx + 1] * plotYscale);
 
                 cv::line(plotFrame, cv::Point(pixelXpos0,pointValue0), cv:: Point(pixelXpos1, pointValue1),cv::Scalar(0,255,0),1,8,0);
                 pixelXpos0 = pixelXpos1;
@@ -466,8 +578,8 @@ int main(int argc, char *argv[])
             pixelXpos0 = plotWpx / 2;
             for (int idx = plotCenterIndex-1; idx > plotStartIdx-1 ; idx--){
                 int pixelXpos1 = pixelXpos0 - plotdX;
-                float pointValue1 = pixelYpos - (int)(fileFloatData[p][idx] * mp * plotYscale);
-                float pointValue0 = pixelYpos - (int)(fileFloatData[p][idx + 1] * mp * plotYscale);
+                float pointValue1 = pixelYpos - (int)(zoomFloatData[idy][idx] * plotYscale);
+                float pointValue0 = pixelYpos - (int)(zoomFloatData[idy][idx + 1] * plotYscale);
                 cv::line(plotFrame, cv::Point(pixelXpos0,pointValue0), cv:: Point(pixelXpos1, pointValue1),cv::Scalar(0,255,0),1,8,0);
                 pixelXpos0 = pixelXpos1;
             }
