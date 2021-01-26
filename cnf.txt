@@ -6,7 +6,7 @@
 # (2)columns to be plotted on general plot counting form 1
 -5;6;7;1
 # (3)columns to be plotted on zoom plot counting form 1
--5;4
+-5;4;6
 # (4)video sync frame - video frame thet syncs with the video sync signal
 500
 # (5) video sync signal column counting from 1 - when the data in this column rise from 0 to 1 it is the video sync position

@@ -116,6 +116,16 @@ std::vector<std::string> splitLine(std::string line, char deliminator = ';'){
     return lins;
 }
 
+
+static void mouseCall(int event, int x, int y, int flags, void* img){
+    
+    if (event == cv::EVENT_MOUSEMOVE) {
+        //std::cout << "event mouse move"<< std::endl; 
+        //std::cout << "x: "<< x << " y: " << y << std::endl; 
+    return;
+}}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // the main loop //
 ///////////////////
@@ -345,6 +355,9 @@ int main(int argc, char *argv[])
     cv::namedWindow("Plot",cv::WINDOW_NORMAL);
     cv::namedWindow("Full Plot",cv::WINDOW_NORMAL);
 
+    // binding mouse callback
+    cv::setMouseCallback("Plot", mouseCall, 0);
+
 
     // ////////////////////////////////////////////////////////////////////////
     // The loop   //
@@ -412,12 +425,22 @@ int main(int argc, char *argv[])
             p = p - 1;
             pixelYpos += 2 * plotYscale + 10;
 
+            int pixelXpos0 = plotWpx / 2;
+
+            // put the value as text
+            float realValue = mp * fileFloatData[p][plotCenterIndex] * fileFloatData[p][0];
+            float textSize = 0.5f;
+            cv::putText(plotFrame, std::to_string(realValue), cv::Point(10,pixelYpos - plotYscale), cv::FONT_HERSHEY_SIMPLEX,textSize,cv::Scalar(200,200,200),1,cv::LINE_AA);
+
+            // data point dot
+            cv::circle(plotFrame, cv::Point(pixelXpos0, pixelYpos - (int)(mp * fileFloatData[p][plotCenterIndex] * plotYscale)), 6, cv::Scalar(0,0,255), 2, 8, 0);
+
+
             // axis lines
             cv::line(plotFrame, cv::Point(0,pixelYpos), cv::Point(plotWpx, pixelYpos),cv::Scalar(255,255,255),1,8,0);
             cv::line(plotFrame, cv::Point(plotWpx/2,0), cv::Point(plotWpx/2, plotHpx),cv::Scalar(255,255,255),1,8,0);
 
             // drawing right from cursor
-            int pixelXpos0 = plotWpx / 2;
             for (int idx = plotCenterIndex; idx < plotEndIdx+1; idx++){
                 int pixelXpos1 = pixelXpos0 + plotdX;
                 float pointValue0 = pixelYpos - (int)(fileFloatData[p][idx] * mp * plotYscale);
