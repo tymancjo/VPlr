@@ -118,10 +118,10 @@ std::vector<std::string> splitLine(std::string line, char deliminator = ';'){
 
 
 static void mouseCall(int event, int x, int y, int flags, void* img){
-    
+
     if (event == cv::EVENT_MOUSEMOVE) {
-        //std::cout << "event mouse move"<< std::endl; 
-        //std::cout << "x: "<< x << " y: " << y << std::endl; 
+        //std::cout << "event mouse move"<< std::endl;
+        //std::cout << "x: "<< x << " y: " << y << std::endl;
     return;
 }}
 
@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
         std::cout << "[ERROR] Config file reading error..." << std::endl;
         return -1;
     }
-    
+
     // reading the config parameters
-    // all columns count in config starts from 1 
+    // all columns count in config starts from 1
     // just for easier human readability
     std::string input_video_file = fOutput.strMatrix[0][0];
     std::string input_csv_file = fOutput.strMatrix[1][0];
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
         std::string this_str = fOutput.strMatrix[2][i];
 
         if (this_str.at(0) == '('){
-            // handling the math input 
+            // handling the math input
             // cleaning the bracket
             boost::replace_all(this_str,"(","");
             boost::replace_all(this_str,")","");
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
         std::string this_str = fOutput.strMatrix[3][i];
 
         if (this_str.at(0) == '('){
-            // handling the math input 
+            // handling the math input
             // cleaning the bracket
             boost::replace_all(this_str,"(","");
             boost::replace_all(this_str,")","");
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
 
     fileData = fOutput.strMatrix;
 
-    // plotting the first datalines 
+    // plotting the first datalines
     for (int i=0; i < 16; i++){
             for(int j=0; j < fileData[i].size(); j++){
                 std::cout << ":" << fileData[i][j];
@@ -313,7 +313,7 @@ int main(int argc, char *argv[])
             for (int pt=0; pt < fileFloatData[0].size(); pt++){
                 // looping over all datapoints
                 float new_data_point = 0.0f;
-                
+
                 for (int i=0; i<to_plot[idx].size(); i++){
 
                     int p = abs(to_plot[idx][i]);
@@ -345,7 +345,7 @@ int main(int argc, char *argv[])
             for (int pt=0; pt < fileFloatData[0].size(); pt++){
                 // looping over all datapoints
                 float new_data_point = 0.0f;
-                
+
                 for (int i=0; i<to_zoom_plot[idx].size(); i++){
 
                     int p = abs(to_zoom_plot[idx][i]);
@@ -395,7 +395,7 @@ int main(int argc, char *argv[])
 
     cv::Mat plotFrame(plotHpx, plotWpx, CV_8UC3, cv::Scalar(0,0,0));
 
-    // full plot 
+    // full plot
     // vector with the plots to draw
     int plots_n = mainFloatData.size();
 
@@ -654,7 +654,7 @@ int main(int argc, char *argv[])
             //for (int i=0; i < frame_buffer.size(); i++){
                     //frame_buffer.erase(frame_buffer.begin());
             //}
-            frame_buffer.clear(); 
+            frame_buffer.clear();
             // logging
             std::cout << "vstart " << video_start_frame << std::endl;
             std::cout << "buffer " << frame_buffer.size() << std::endl;
