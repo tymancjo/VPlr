@@ -2,8 +2,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <boost/algorithm/string.hpp>
-#include "opencv4/opencv2/opencv.hpp"
-
+#include "opencv2/opencv.hpp"
 
 //////////////////////////////
 // the function definitions //
@@ -55,15 +54,15 @@ results parseCsvData(std::vector<std::vector<std::string>> inputText, int startR
     // so the idea is to make the size first
     // so I'm adding 0 to each column vector
 
-    for (int col=0; col < inputText[startRow].size() - cut_columns; col++){
+    for (unsigned long col=0; col < inputText[startRow].size() - cut_columns; col++){
         std::vector<float> C;
         C.push_back(0);
         output.fMatrix.push_back(C);
         C.pop_back();
     }
 
-    for (int row=startRow; row < inputText.size(); row++){
-        for (int col=0; col < inputText[row].size() - cut_columns; col++){
+    for (unsigned long row=startRow; row < inputText.size(); row++){
+        for (unsigned long col=0; col < inputText[row].size() - cut_columns; col++){
             std::stringstream iss( inputText[row][col] );
             float val;
             if (iss >> val) {
@@ -76,26 +75,28 @@ results parseCsvData(std::vector<std::vector<std::string>> inputText, int startR
     return output;
 };
 
+
 std::vector<float> normalizeFloatVec(std::vector<float> inputVector){
 
     std::vector<float> M;
     float max = 0;
 
-    for (int el=0; el < inputVector.size(); el++){
+    for (unsigned long el=0; el < inputVector.size(); el++){
         max = (abs(inputVector[el]) > max)? abs(inputVector[el]) : max;
     }
-    for (int el=0; el < inputVector.size(); el++){
+    for (unsigned long el=0; el < inputVector.size(); el++){
         if (max != 0)
             M.push_back(inputVector[el] / max);
         else
             M.push_back(0);
     }
     M[0] = max; // Memorizing the max in the added cell 0
+    
     return M;
 };
 
 int findIndex(std::vector<float> V, float treshold, int start=0){
-    for (int i = start; i < V.size(); i++){
+    for (unsigned long i = start; i < V.size(); i++){
         if (V[i] >= treshold)
             return i;
     }
@@ -117,13 +118,13 @@ std::vector<std::string> splitLine(std::string line, char deliminator = ';'){
 }
 
 
-static void mouseCall(int event, int x, int y, int flags, void* img){
+//static void mouseCall(int event, int x, int y, int flags, void* img){
 
-    if (event == cv::EVENT_MOUSEMOVE) {
-        //std::cout << "event mouse move"<< std::endl;
-        //std::cout << "x: "<< x << " y: " << y << std::endl;
-    return;
-}}
+    //if (event == cv::EVENT_MOUSEMOVE) {
+        ////std::cout << "event mouse move"<< std::endl;
+        ////std::cout << "x: "<< x << " y: " << y << std::endl;
+    //return;
+//}}
 
 int str2int(std::string input_text){
     std::stringstream iss(input_text);
@@ -172,7 +173,7 @@ int main(int argc, char *argv[])
 
     // reading which data columns to zoom plot from config file
     std::vector<std::vector<int>> to_plot;
-    for (int i=0; i < fOutput.strMatrix[2].size(); i++){
+    for (unsigned long i=0; i < fOutput.strMatrix[2].size(); i++){
         std::vector<int> line_data;
         std::string this_str = fOutput.strMatrix[2][i];
 
@@ -202,7 +203,7 @@ int main(int argc, char *argv[])
 
     // reading which data columns to zoom plot from config file
     std::vector<std::vector<int>> to_zoom_plot;
-    for (int i=0; i < fOutput.strMatrix[3].size(); i++){
+    for (unsigned long i=0; i < fOutput.strMatrix[3].size(); i++){
         std::vector<int> line_data;
         std::string this_str = fOutput.strMatrix[3][i];
 
@@ -277,7 +278,7 @@ int main(int argc, char *argv[])
 
     // plotting the first datalines
     for (int i=0; i < 16; i++){
-            for(int j=0; j < fileData[i].size(); j++){
+            for(unsigned long j=0; j < fileData[i].size(); j++){
                 std::cout << ":" << fileData[i][j];
             }
             std::cout << "|" << std::endl;
@@ -306,15 +307,15 @@ int main(int argc, char *argv[])
 
     // preparing the zoom display array // ///////////////////////////////////
     std::vector <std::vector<float>> mainFloatData;
-    for (int idx=0; idx < to_plot.size(); idx++){
+    for (unsigned long idx=0; idx < to_plot.size(); idx++){
             // in case of multiple indexes we need to do the math
             std::vector<float> new_data_vec;
 
-            for (int pt=0; pt < fileFloatData[0].size(); pt++){
+            for (unsigned long pt=0; pt < fileFloatData[0].size(); pt++){
                 // looping over all datapoints
                 float new_data_point = 0.0f;
 
-                for (int i=0; i<to_plot[idx].size(); i++){
+                for (unsigned long i=0; i<to_plot[idx].size(); i++){
 
                     int p = abs(to_plot[idx][i]);
                     int mp = to_plot[idx][i] / p;
@@ -328,7 +329,7 @@ int main(int argc, char *argv[])
         }
 
     // normalizing  zoom data vector
-    for (int col=0; col < mainFloatData.size(); col++){
+    for (unsigned long col=0; col < mainFloatData.size(); col++){
         std::vector<float> V;
         V = normalizeFloatVec(mainFloatData[col]);
         mainFloatData[col] = V;
@@ -338,15 +339,15 @@ int main(int argc, char *argv[])
 
     // preparing the zoom display array // ///////////////////////////////////
     std::vector <std::vector<float>> zoomFloatData;
-    for (int idx=0; idx < to_zoom_plot.size(); idx++){
+    for (unsigned long idx=0; idx < to_zoom_plot.size(); idx++){
             // in case of multiple indexes we need to do the math
             std::vector<float> new_data_vec;
 
-            for (int pt=0; pt < fileFloatData[0].size(); pt++){
+            for (unsigned long pt=0; pt < fileFloatData[0].size(); pt++){
                 // looping over all datapoints
                 float new_data_point = 0.0f;
 
-                for (int i=0; i<to_zoom_plot[idx].size(); i++){
+                for (unsigned long i=0; i<to_zoom_plot[idx].size(); i++){
 
                     int p = abs(to_zoom_plot[idx][i]);
                     int mp = to_zoom_plot[idx][i] / p;
@@ -360,7 +361,7 @@ int main(int argc, char *argv[])
         }
 
     // normalizing  zoom data vector
-    for (int col=0; col < zoomFloatData.size(); col++){
+    for (unsigned long col=0; col < zoomFloatData.size(); col++){
         std::vector<float> V;
         V = normalizeFloatVec(zoomFloatData[col]);
         zoomFloatData[col] = V;
@@ -399,7 +400,7 @@ int main(int argc, char *argv[])
     // vector with the plots to draw
     int plots_n = mainFloatData.size();
 
-    int fullPlotWpx = 800;
+    unsigned long fullPlotWpx = 800;
     int fullPlotHpx = 120 * plots_n;
 
     cv::Mat fullPlotFrame(fullPlotHpx + 50, fullPlotWpx, CV_8UC3, cv::Scalar(0,0,0));
@@ -419,7 +420,7 @@ int main(int argc, char *argv[])
 
     int posY = 10 - plotYscale;
 
-        for (int idy=0; idy < mainFloatData.size(); idy++){
+        for (unsigned long idy=0; idy < mainFloatData.size(); idy++){
 
         posY += 2 * plotYscale + 10;
 
@@ -430,7 +431,7 @@ int main(int argc, char *argv[])
             int posX = 0;
             int posX1 = 0;
 
-            for (int idx=1; idx < mainFloatData[idy].size()-dataStep; idx += dataStep){
+            for (unsigned long idx=1; idx < mainFloatData[idy].size()-dataStep; idx += dataStep){
                 // starting from one as the 0 is the added max value
                 posX1 += dXpx;
 
@@ -463,7 +464,7 @@ int main(int argc, char *argv[])
     cap.set(cv::CAP_PROP_POS_FRAMES, video_start_frame);
 
     int klatka_stop = 30000; // just something that rather be always way more then frames
-    int klatka = 0;
+    unsigned long klatka = 0;
     int klatka_total = -1;
     int klatka_max = -1;
     int step = 1;
@@ -484,7 +485,7 @@ int main(int argc, char *argv[])
     cv::namedWindow("Full Plot",cv::WINDOW_NORMAL);
 
     // binding mouse callback
-    cv::setMouseCallback("Plot", mouseCall, 0);
+    //cv::setMouseCallback("Plot", mouseCall, 0);
 
 
     // ////////////////////////////////////////////////////////////////////////
@@ -546,7 +547,7 @@ int main(int argc, char *argv[])
         int pixelYpos = 10 - plotYscale;
 
         // looping over plots
-        for (int idy=0; idy < zoomFloatData.size(); idy++){
+        for (unsigned long idy=0; idy < zoomFloatData.size(); idy++){
 
             pixelYpos += 2 * plotYscale + 10;
             int pixelXpos0 = plotWpx / 2;
